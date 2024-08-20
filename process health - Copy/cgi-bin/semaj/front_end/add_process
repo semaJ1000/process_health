@@ -1,0 +1,151 @@
+#!/path/to/perl
+
+BEGIN {unshift(@INC,"/path/to/perl5lib");};
+
+require "cgi.pl";
+
+&ReadParse;
+
+select(STDOUT);
+$| = 1;
+
+my $process_csv = '/path/to/process.csv';
+my %process = (
+   id => "None",
+   path => $in{'process_path'} || "None",
+   input_path => $in{'input_file_path'} || "None",
+   output_path => $in{'output_file_path'} || "None",
+   long_running => $in{'long_running_test'},
+   input => $in{'input_test'},
+   output => $in{'output_test'},
+);
+
+html_header2(" Add Process ");
+
+
+my $result = add_process();
+
+
+
+if(!$result) {
+   print '<p>Error adding process, please try again'.$result.'</p>';
+}
+
+elsif ($result == -1){
+   print '<p>Input test called with no provided input file path</p>';
+}
+
+elsif ($result == -2){
+   print '<p>Input file path provided without calling input test</p>';
+}
+
+elsif ($result == -3){
+   print '<p>Output test called with no provided output file path</p>';
+}
+
+elsif ($result == -4){
+   print '<p>Output file path provided without calling output test</p>';
+}
+
+elsif ($result == -5){
+   print '<p>No test types selected</p>';
+}
+
+else{
+print <<END
+   <script>
+      window.close();
+   </script>
+END
+
+}
+
+sub add_process{  # Make it so that if one of the lower id's is missing, it will use that id before it uses a higher one
+   # Fill an array with each used entry and then search with an incrementing variable to find the first unused id
+      # Have to make a new one each time to avoid webpage refreshes to break it
+   # Have a stack with a large number of ids on it, and when you add and remove processes you push and pop the lowest numbers
+      # Not possible because web-page constantly refreshes losing all variables
+   # Get it to take the next highest id that is available, ignoring unused ids lower
+      # simplest method with the constant refreshing that happens
+   if ($process{input} && $process{input_path} eq 'None'){
+      return -1;
+   }
+   if (!$process{input} && $process{input_path} ne 'None'){
+      return -2;
+   }
+   if ($process{output} && $process{output_path} eq 'None'){
+      return -3;
+   }
+   if (!$process{output} && $process{output_path} ne 'None'){
+      return -4;
+   }
+   if (!$process{input} && !$process{output} && !$process{long_running}){
+      return -5;
+   }
+
+   open(CSV,"+<",$process_csv);
+   my $cur_id;
+   my $max_id;
+   while (my $line = <CSV>){
+      $cur_id = (split(',', $line))[0];      #move to the first entry in the last line
+      $max_id = $cur_id if $cur_id > $max_id;
+   }
+   $process{id} = $max_id + 1;
+   my $string = $process{id}.",".$process{path}.",".$process{input_path}.","
+            .$process{output_path}.",".$process{long_running}.",".$process{input}.",".$process{output};
+
+   print CSV "\n";
+   print CSV $string;
+   close(CSV);
+   return 1;
+}
+
+sub html_header2 {
+   local($title) = @_;
+   my $HEADERTYPE = "Content-type: text/html";
+
+   print "$HEADERTYPE\n\n";
+   print "<html><head><title>$title</title>";
+   print '<style>';
+
+   # PURPLE SECTION START:
+
+      # print 'body {';
+      #    print 'background-color: #6500ad;';
+      # print '}';
+      # print 'input {';
+      #    print 'background-color: grey;';
+      # print '}';
+      # print 'button {';
+      #    print 'background-color: grey;';
+      # print '}';
+      # print 'select {';
+      #    print 'background-color:grey;';
+      # print '}';
+      # print 'table {';
+      #    print 'background-color: grey;';
+      # print '}';
+
+   # PURPLE SECTION END
+
+      print '#process_info {';
+         print 'width: 500px;';
+         print 'height:200px;';
+      print '}';
+
+      print 'table {';
+         print 'border-collapse: collapse;';
+      print '}';
+
+      print 'td, th {';
+         print 'text-align: center;';
+         print 'vertical-align: middle;';
+         print 'border: 1px solid black;';
+         print 'padding: 8px;';
+      print '}';
+
+   print '</style>';
+   print "</head>\n<body>\n";     
+}
+
+html_trailer();

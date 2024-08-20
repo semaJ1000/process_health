@@ -1,0 +1,245 @@
+#!/path/to/perl
+
+############ BEGIN WEBPAGE SECTION ##################
+
+BEGIN {unshift(@INC,"/path/to/perl5lib");};
+
+require "cgi.pl";
+
+my %process = (
+   id => "None",
+   path => "None",
+   input_path => "None",
+   output_path => "None",
+   long_running => 0,
+   input => 0,
+   output => 0,
+);
+
+$file_path = "/path/to/middle_man.json";
+$process_csv = "/path/to/process.csv";
+$process_status;
+@process_list;
+
+#html_header defined in cgi.pl, needed to redefine it to include css.
+html_header2(" Process Health Page ");
+
+print <<END;
+
+<h1>Process Health Page</h1>
+
+<form method='post' action='display_explanation' target='_blank'>
+   <input type="submit" value="display explanation">
+</form>
+
+<h4>Process Status</h4>
+
+<table id = 'table1'></table>
+
+<br>
+
+<button onclick="reload_page()">refresh</button>
+
+<h4>Add Process</h4>
+<form method = 'post' action='add_process' target='_blank'>
+   <label for="process_path">Process Path:</label>
+      <input type="text" id="process_path" name="process_path" size="70" spellcheck="false">
+
+   <br>
+
+   <label for="input_file_path">Input File Path:</label>
+   <input type="text" id="input_file_path" name="input_file_path" size="70" spellcheck="false">
+
+   <br>
+
+   <label for="output_file_path">Ouput File Path:</label>
+   <input type="text" id="output_file_path" name="output_file_path" size="70" spellcheck="false">
+   
+   <br>
+
+   <label for="long_running_test">Long Running Test:</label>
+   <select id="long_running_test" name="long_running_test">
+      <option value="0">No</option>
+      <option value="1">Yes</option>
+   </select>
+
+   <br>
+
+   <label for="input_test">Input Test:</label>
+   <select id="input_test" name="input_test">
+      <option value="0">No</option>
+      <option value="1">Yes</option>
+   </select>
+
+   <br>
+
+   <label for="output_test">Output Test:</label>
+   <select id="output_test" name="output_test">
+      <option value="0">No</option>
+      <option value="1">Yes</option>
+   </select>
+
+   <br>
+
+   <input type="submit" value="Submit">
+</form>
+
+<h4>Remove Process</h4>
+<p>Fill out one of the following:</p>
+<form method='post' action='remove_process' target='_blank'>
+   <label for="process_id">Process ID:</label>
+   <input type="text" id="process_id" name="process_id" size="10" spellcheck="false" autocomplete="off">
+
+   <br>
+
+   <label for="process_name">Process Name:</label>
+   <input type="text" id="process_name" name="process_name" size="20" spellcheck="false">
+
+   <br>
+
+   <label for="r_process_path">Process Path:</label>
+   <input type="text" id="r_process_path" name="r_process_path" size="70" spellcheck="false">
+
+   <br>
+
+   <input type="submit" value="Submit">
+</form>
+
+<h4>Email List</h4>
+<p>Emails here will be sent updates on the status of tracked processes.
+   <br>Use csv to add/remove multiple.</p>
+
+<form method='post' action='update_emails' target='_blank'>
+   <label for="add_email">Add Email:</label>
+   <input type="text" id="add_email" name="add_email" size="30" spellcheck="false">
+
+   <br>
+
+   <label for="remove_email">Remove Email:</label>
+   <input type="text" id="remove_email" name="remove_email" size="30" spellcheck="false">
+
+   <br>
+
+   <input type="submit" value="Submit">
+</form>
+
+<form method='post' action='display_emails' target='_blank'>
+   <input type="submit" value="display email list">
+</form>
+
+END
+
+print '<script>';
+   print 'function reload_page() {';
+      print 'var scrollPos = window.scrollY || window.pageYOffset;'; # Get the current scroll position
+      print 'window.location.reload();'; # Reload the page
+      print 'window.scrollTo(0, scrollPos);'; # Restore the scroll position after reload
+   print '}';
+print '</script>';
+
+print '<script>';
+
+   print "let headers = [ {id: 'yes', name: 'no', status: 'maybe', reason: 'yeesh'} ];";  # Define table headers
+
+   print 'let process_data = [];';
+
+   print "fetch('http://webpage.net/path/to/middle_man.json')"; # CHANGE WHEN PUSHING TO PROD
+   print ".then(response => response.json())";
+   print ".then(jsonData => {";
+
+      print 'jsonData.forEach(obj => {';
+         print "let temp = { id: obj.id, name: obj.name, status: obj.status, reason: obj.reason };";
+         print "process_data.push(temp);";
+      print "});";
+
+      print 'let table = document.querySelector("#table1");';
+      print "let data = Object.keys(process_data[0]);";
+      print 'generateTableHead(table, data);';
+      print "generateTable(table, process_data);";
+
+      print 'function generateTableHead(table){';
+         print 'let thead = table.createTHead();';
+         print 'let row = thead.insertRow();';
+         print 'for (let key of data){';
+            print "let th = document.createElement('th');";
+            print "let text = document.createTextNode(key);";
+            print "th.appendChild(text);";
+            print "row.appendChild(th);";
+         print '}';
+      print '}';
+
+      print 'function generateTable(table, data){';
+         print 'for (let i = 0; i < data.length; i++){';
+            print "let element = data[i];";
+            print "let row = table.insertRow();";
+            print 'for (key in element){';
+               print "let cell = row.insertCell();";
+               print 'let content = element[key];';
+               print 'cell.innerHTML = content;';
+            print '}';
+         print '}';
+      print '}';
+   print "})";
+   print ".catch(error => {";
+   print "console.error('Error fetching or parsing JSON:', error);";
+   print "});";
+print '</script>';
+
+sub html_header2 {
+   local($title) = @_;
+   my $HEADERTYPE = "Content-type: text/html";
+
+   print "$HEADERTYPE\n\n";
+   print "<html><head><title>$title</title>";
+   print '<style>';
+
+   # PURPLE SECTION START:
+
+      # print 'body {';
+      #    print 'background-color: #6500ad;';
+      # print '}';
+      # print 'input {';
+      #    print 'background-color: grey;';
+      # print '}';
+      # print 'button {';
+      #    print 'background-color: grey;';
+      # print '}';
+      # print 'select {';
+      #    print 'background-color:grey;';
+      # print '}';
+      # print 'table {';
+      #    print 'background-color: grey;';
+      # print '}';
+
+   # PURPLE SECTION END
+
+      print '#process_info {';
+         print 'width: 500px;';
+         print 'height:200px;';
+      print '}';
+      print '#email_info {';
+         print 'width: 500px;';
+         print 'height:200px;';
+      print '}';
+
+      print 'table {';
+         print 'border-collapse: collapse;';
+      print '}';
+
+      print 'td, th {';
+         print 'text-align: center;';
+         print 'vertical-align: middle;';
+         print 'border: 1px solid black;';
+         print 'padding: 8px;';
+      print '}';
+
+      print '#toggle-button {';
+      print '    position: fixed;';  # Set the position to fixed to keep it in place even when scrolling
+      print '    top: 20px;';  # Adjust the distance from the top of the page
+      print '    right: 20px;';  # Adjust the distance from the right of the page
+      print '    z-index: 9999;';  # Ensure it appears above other elements on the page
+      print '}';
+
+   print '</style>';
+   print "</head>\n<body>\n";     
+}

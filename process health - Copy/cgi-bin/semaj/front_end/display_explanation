@@ -1,0 +1,155 @@
+#!/path/to/perl
+
+BEGIN {unshift(@INC,"/path/to/perl5lib");};
+
+require "cgi.pl";
+use Logger;
+
+&ReadParse;
+
+select(STDOUT);
+$| = 1;
+
+my $email_path = '/path/to/email_list.txt';
+my %log_hash = (
+   path => '/path/to/process_health.log',
+);
+my $log = Logger->new(\%log_hash);
+
+html_header2(" Explanation ");
+
+$log->logF("Webpage: displaying explanation");
+
+print <<END;
+   <p><b>System Name:</b> Process Health Page<p>
+
+   <p><b>Version:</b> 3.1</p>
+
+   <b>Description:</b>
+
+      <p>
+      This is a system that keeps track of processes<br>
+      on the lab and test servers and sends out email<br>
+      notifications if any of the processes stop working.<br>
+      The goal is that if any process is on the health<br>
+      page, it is not able to stop working quietly in<br>
+      the background.<br>
+<br>
+      You should add your process to the health page if<br>
+      it is important that it is always running and you<br>
+      need to be made aware if it ever stops.<br>
+<br>
+      There is 3 types of tests that are run: input,<br>
+      output, and long running. Input checks the validity<br>
+      of an input file, output ensures there is output and<br>
+      it is not too old, and long running checks to see if<br>
+      the process is currently executing on the server.<br>
+      The webpage updates every 5 seconds<br>
+      </p>
+
+   <b>Developers:</b>
+
+      <p>
+      James H (Co-op student) - April 16th 2024<br>
+      Tariq C - April 16th 2024
+      </p>
+
+   <b>Webpage URL:</b>
+
+      <p>
+      This will depend on which server you are working on,<br>
+      see two examples below.<br>
+
+      http://webpage.net/path/to/front_end/main_page<br>
+      http://webpage.net/path/to/front_end/main_page<br>
+      </p>
+
+   <b>How to Use:</b><br><br>
+
+   <b>To Add a process:</b><br><br>
+
+      <b>Method 1:</b><br>
+
+         <p>
+         Go on to the process health web page and fill in<br>
+         the appropriate information about your process.<br>
+         </p>
+
+      <b>Method 2:</b><br>
+
+         <p>
+         Add a section as outlined below somewhere near<br>
+         the beginning of your long running script.<br>
+<br>
+         =pod PHP<br>
+         Input: /input/file/path<br>
+         Output: /output/file/path<br>
+         Long Running<br>
+         =cut PHP<br>
+<br>
+         Omit input/output if they do not apply to your<br>
+         program. IT MUST HAVE AN ACTIVE PID IN PS -E <br>
+         FOR THIS TO WORK, otherwise use method 1.<br>
+         </p>
+
+   <b>To remove a process:</b><br>
+
+      <p>
+      Go on to the process health page and fill in<br>
+      either the name or id of the process to remove.<br>
+      If you have a =pod PHP section in your code be sure<br>
+      to remove it or the health page will pick it up again.<br>
+      </p>
+END
+
+sub html_header2 {
+   local($title) = @_;
+   my $HEADERTYPE = "Content-type: text/html";
+
+   print "$HEADERTYPE\n\n";
+   print "<html><head><title>$title</title>";
+   print '<style>';
+
+   # PURPLE SECTION START:
+
+      # print 'body {';
+      #    print 'background-color: #6500ad;';
+      # print '}';
+      # print 'input {';
+      #    print 'background-color: grey;';
+      # print '}';
+      # print 'button {';
+      #    print 'background-color: grey;';
+      # print '}';
+      # print 'select {';
+      #    print 'background-color:grey;';
+      # print '}';
+      # print 'table {';
+      #    print 'background-color: grey;';
+      # print '}';
+
+   # PURPLE SECTION END
+
+      print '#process_info {';
+         print 'width: 500px;';
+         print 'height:200px;';
+      print '}';
+
+      print 'table {';
+         print 'border-collapse: collapse;';
+      print '}';
+
+      print 'td, th {';
+         print 'text-align: center;';
+         print 'vertical-align: middle;';
+         print 'border: 1px solid black;';
+         print 'padding: 8px;';
+      print '}';
+
+   print '</style>';
+   print "</head>\n<body>\n";     
+}
+
+html_trailer();
+
+1;
